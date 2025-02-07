@@ -1,7 +1,7 @@
 # Self-Analysis-Mental-Health
 
 ## Overview
-This project is a **Mental Health Prediction System** that analyzes user input to predict **depression and anxiety severity levels** using machine learning models. It also provides **natural language explanations** and **suggested coping mechanisms**. The detailed explanation of the process is in EDA_&_ModelDevelopment.ipynb and Video of the explanation will be uploaded within today
+This project is a **Mental Health Prediction System** that analyzes user input to predict **depression and anxiety severity levels** using machine learning models. It also provides **natural language explanations** and **suggested coping mechanisms**. The detailed explanation of the process is in EDA_&_ModelDevelopment.ipynb and Video of the explanation will be uploaded within EOD.
 
 ## Features
 - Predicts **depression** and **anxiety severity levels** based on user responses.
