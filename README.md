@@ -16,7 +16,7 @@ This project is a **Mental Health Prediction System** that analyzes user input t
 ## Installation
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/yourusername/mental-health-prediction.git
+git clone https://github.com/saichiranthan/Self-Analysis-Mental-Health.git
 cd mental-health-prediction
 ```
 
