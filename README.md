@@ -33,17 +33,7 @@ Ensure `rf_depression_model.pkl` and `rf_anxiety_model.pkl` are in the project d
 ```bash
 streamlit run mental_health_ui.py
 ```
-
-### 2. Run the CLI-based Predictor
-```bash
-python predict_mental_health.py
-```
-
-### 3. Test in Jupyter Notebook
-```bash
-jupyter notebook
-# Open and run model_testing.ipynb
-```
+Make sure that saved models are in the same directory or specify their location in the above code
 
 ## Model Details
 - **Random Forest Classifier** trained on mental health datasets.
