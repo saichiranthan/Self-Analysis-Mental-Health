@@ -43,10 +43,8 @@ Make sure that saved models are in the same directory or specify their location 
 ## Contributions
 Feel free to fork the repo, create a new branch, and submit a pull request.
 
-## License
-This project is licensed under the MIT License.
 
 ---
 
-🚀 **Developed by [Your Name]**
+🚀 **Developed by Sai CHiranthan H M**
 
