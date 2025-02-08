@@ -26,12 +26,12 @@ pip install -r requirements.txt
 ```
 
 ### 3. Download Model Files
-Ensure `rf_depression_model.pkl` and `rf_anxiety_model.pkl` are in the project directory.
+Ensure `rf_depression_model.pkl`, 'scaler.pkl'. 'features.pkl' and `rf_anxiety_model.pkl` are in the project directory if not then specify their paths from saved location from training model saved from EDA_&_ModelDevelopment.ipynb .
 
 ## Usage
 ### 1. Run the Streamlit UI
 ```bash
-streamlit run mental_health_ui.py
+streamlit run predict_mental_health.py
 ```
 Make sure that saved models are in the same directory or specify their location in the above code
 
