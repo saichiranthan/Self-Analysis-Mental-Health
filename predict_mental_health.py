@@ -6,15 +6,27 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 
 class MentalHealthAnalyzer:
     def __init__(self):
-        # Load the trained models
-        self.rf_depression = joblib.load('rf_depression_model.pkl')
-        self.rf_anxiety = joblib.load('rf_anxiety_model.pkl')
+        try:
+            # Load the trained models and scaler
+            self.rf_depression = joblib.load(r"C:\Users\chira\Downloads\Arogo AI\rf_depression_model.pkl")
+            self.rf_anxiety = joblib.load(r"C:\Users\chira\Downloads\Arogo AI\rf_anxiety_model.pkl")
+            self.scaler = joblib.load(r"C:\Users\chira\Downloads\Arogo AI\scaler.pkl")
+            self.feature_names = joblib.load(r"C:\Users\chira\Downloads\Arogo AI\feature_names.pkl")
+            # Initialize encoders with default mappings
+            self.gender_map = {'female': 0, 'male': 1}
+            self.bmi_category_map = {
+                "Underweight": 0,
+                "Normal": 1,
+                "Overweight": 2,
+                "Class I Obesity": 3,
+                "Class II Obesity": 4,
+                "Class III Obesity": 5
+            }
+            
+        except FileNotFoundError as e:
+            st.error(f"Required model files not found: {str(e)}")
+            st.stop()
         
-        # Initialize encoders and scaler
-        self.label_encoders = self._initialize_encoders()
-        self.scaler = StandardScaler()
-        
-        # Define severity mappings
         self.depression_severity_map = {
             0: "Mild",
             1: "Moderate",
@@ -32,7 +44,6 @@ class MentalHealthAnalyzer:
             4: "Extremely Severe"
         }
         
-        # Define coping mechanisms
         self.coping_mechanisms = {
             "Mild": [
                 "Practice deep breathing exercises daily",
@@ -57,18 +68,46 @@ class MentalHealthAnalyzer:
             ]
         }
 
-    def _initialize_encoders(self):
-        # Initialize label encoders for categorical variables
-        categorical_columns = ['gender', 'who_bmi', 'depression_severity', 
-                             'anxiety_severity', 'depressiveness', 'suicidal',
-                             'depression_diagnosis', 'depression_treatment',
-                             'anxiousness', 'anxiety_diagnosis', 'anxiety_treatment',
-                             'sleepiness']
+    def _preprocess_input(self, input_data):
+        # Convert input data to DataFrame
+        df = pd.DataFrame([input_data])
         
-        encoders = {}
-        for col in categorical_columns:
-            encoders[col] = LabelEncoder()
-        return encoders
+        # Convert categorical variables to numeric
+        df['gender'] = df['gender'].map(self.gender_map)
+        df['who_bmi'] = df['who_bmi'].map(self.bmi_category_map)
+        
+        # Convert boolean fields to integers
+        boolean_fields = ['depressiveness', 'suicidal', 'depression_diagnosis', 
+                         'depression_treatment', 'anxiousness', 'anxiety_diagnosis', 
+                         'anxiety_treatment', 'sleepiness']
+        for field in boolean_fields:
+            df[field] = df[field].astype(int)
+        
+        # Add placeholder for required features that aren't in input
+        df['id'] = 0  # Placeholder ID
+        df['school_year'] = 0  # Placeholder school year
+        
+        # Scale numerical features
+        numerical_features = ['age', 'bmi', 'phq_score', 'gad_score', 'epworth_score']
+        try:
+            df[numerical_features] = self.scaler.transform(df[numerical_features])
+        except Exception as e:
+            st.error(f"Error preprocessing data: {str(e)}")
+            st.error("Please ensure the scaler was properly fitted during model training.")
+            st.stop()
+        
+        # Create derived features
+        df['total_mental_health_score'] = df['phq_score'] + df['gad_score']
+        df['bmi_who_interaction'] = df['bmi'] * df['who_bmi']
+        
+        # Ensure all required features exist
+        for feature in self.feature_names:
+            if feature not in df.columns:
+                st.error(f"Missing required feature: {feature}")
+                st.stop()
+        
+        # Return DataFrame with exact column order from training
+        return df[self.feature_names]
 
     def generate_explanation(self, depression_severity, anxiety_severity, scores):
         explanation = []
@@ -108,45 +147,39 @@ class MentalHealthAnalyzer:
         return "\n".join(suggestions)
 
     def predict(self, input_data):
-        # Prepare input data
-        processed_data = self._preprocess_input(input_data)
-        
-        # Make predictions
-        depression_pred = self.rf_depression.predict(processed_data)[0]
-        anxiety_pred = self.rf_anxiety.predict(processed_data)[0]
-        
-        # Generate explanation and coping mechanisms
-        explanation = self.generate_explanation(depression_pred, anxiety_pred, input_data)
-        coping_mechanisms = self.suggest_coping_mechanisms(depression_pred, anxiety_pred)
-        
-        return {
-            'depression_severity': self.depression_severity_map.get(depression_pred, "Unknown"),
-            'anxiety_severity': self.anxiety_severity_map.get(anxiety_pred, "Unknown"),
-            'explanation': explanation,
-            'coping_mechanisms': coping_mechanisms
-        }
+        try:
+            # Prepare input data
+            processed_data = self._preprocess_input(input_data)
+            
+            # Make predictions
+            depression_pred = self.rf_depression.predict(processed_data)[0]
+            anxiety_pred = self.rf_anxiety.predict(processed_data)[0]
+            
+            # Generate explanation and coping mechanisms
+            explanation = self.generate_explanation(depression_pred, anxiety_pred, input_data)
+            coping_mechanisms = self.suggest_coping_mechanisms(depression_pred, anxiety_pred)
+            
+            return {
+                'depression_severity': self.depression_severity_map.get(depression_pred, "Unknown"),
+                'anxiety_severity': self.anxiety_severity_map.get(anxiety_pred, "Unknown"),
+                'explanation': explanation,
+                'coping_mechanisms': coping_mechanisms
+            }
+        except Exception as e:
+            st.error(f"Prediction error: {str(e)}")
+            st.error("Debug info - Data shape: {processed_data.shape}, Columns: {processed_data.columns}")
+            raise e
 
-    def _preprocess_input(self, input_data):
-        # Convert input data to DataFrame
-        df = pd.DataFrame([input_data])
-        
-        # Scale numerical features
-        numerical_features = ['age', 'bmi', 'phq_score', 'gad_score', 'epworth_score']
-        df[numerical_features] = self.scaler.fit_transform(df[numerical_features])
-        
-        # Create the total mental health score feature
-        df['total_mental_health_score'] = df['phq_score'] + df['gad_score']
-        
-        # Create BMI interaction term
-        df['bmi_who_interaction'] = df['bmi'] * df['who_bmi']
-        
-        return df
 
 def main():
     st.title("🧠 Mental Health Analysis Tool")
     st.write("This tool analyzes mental health indicators and provides personalized insights and recommendations.")
     
-    analyzer = MentalHealthAnalyzer()
+    try:
+        analyzer = MentalHealthAnalyzer()
+    except Exception as e:
+        st.error("Failed to initialize the analyzer. Please check if all required model files are present.")
+        st.stop()
     
     with st.form("mental_health_form"):
         st.subheader("Personal Information")
@@ -207,19 +240,23 @@ def main():
                 'sleepiness': epworth_score > 10
             }
             
-            results = analyzer.predict(input_data)
-            
-            st.subheader("Analysis Results")
-            st.markdown(f"**Depression Severity:** {results['depression_severity']}")
-            st.markdown(f"**Anxiety Severity:** {results['anxiety_severity']}")
-            
-            st.subheader("Detailed Analysis")
-            st.markdown(results['explanation'])
-            
-            st.subheader("Recommendations")
-            st.markdown(results['coping_mechanisms'])
-            
-            st.info("Note: This tool is for informational purposes only and should not be used as a substitute for professional medical advice, diagnosis, or treatment.")
+            try:
+                results = analyzer.predict(input_data)
+                
+                st.subheader("Analysis Results")
+                st.markdown(f"**Depression Severity:** {results['depression_severity']}")
+                st.markdown(f"**Anxiety Severity:** {results['anxiety_severity']}")
+                
+                st.subheader("Detailed Analysis")
+                st.markdown(results['explanation'])
+                
+                st.subheader("Recommendations")
+                st.markdown(results['coping_mechanisms'])
+                
+                st.info("Note: This tool is for informational purposes only and should not be used as a substitute for professional medical advice, diagnosis, or treatment.")
+            except Exception as e:
+                st.error(f"An error occurred during analysis: {str(e)}")
+                st.error("Please try again or contact support if the problem persists.")
 
 if __name__ == "__main__":
     main()
