@@ -11,7 +11,7 @@ This project is a **Mental Health Prediction System** that analyzes user input t
   - **Command-line script** (`predict_mental_health.py`)
   - **Streamlit UI** for an interactive experience.
   - **Jupyter Notebook** for model testing.
-- **PDF Report** summarizing dataset insights, model performance, and findings.
+- **PDF Report** summarizing dataset insights, model performance, and findings.(`Mental Health Prediction System.pdf`)
 
 ## Installation
 ### 1. Clone the Repository
